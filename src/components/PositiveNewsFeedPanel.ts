@@ -3,6 +3,7 @@ import type { NewsItem } from '@/types';
 import type { HappyContentCategory } from '@/services/positive-classifier';
 import { HAPPY_CATEGORY_ALL, HAPPY_CATEGORY_LABELS } from '@/services/positive-classifier';
 import { shareHappyCard } from '@/services/happy-share-renderer';
+import { getNewsShareUrls } from '@/services/story-share';
 import { formatTime } from '@/utils';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
 
@@ -114,7 +115,32 @@ export class PositiveNewsFeedPanel extends Panel {
     // Delegated click handler for share buttons (remove first to avoid stacking)
     this.content.removeEventListener('click', this.handleShareClick);
     this.content.addEventListener('click', this.handleShareClick);
+
+    // Facebook share buttons
+    this.content.removeEventListener('click', this.handleFbShareClick);
+    this.content.addEventListener('click', this.handleFbShareClick);
   }
+
+  /**
+   * Delegated click handler for .item-share-fb buttons.
+   */
+  private handleFbShareClick = (e: Event): void => {
+    const target = e.target as HTMLElement;
+    const shareBtn = target.closest('.item-share-fb') as HTMLButtonElement | null;
+    if (!shareBtn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const news = {
+      title: shareBtn.dataset.title || '',
+      link: shareBtn.dataset.link || '',
+      source: shareBtn.dataset.source || '',
+      imageUrl: shareBtn.dataset.img || undefined
+    };
+    const urls = getNewsShareUrls(news);
+    window.open(urls.facebook, '_blank');
+  };
 
   /**
    * Delegated click handler for .positive-card-share buttons.
@@ -132,7 +158,7 @@ export class PositiveNewsFeedPanel extends Panel {
     if (!item) return;
 
     // Fire-and-forget share
-    shareHappyCard(item).catch(() => {});
+    shareHappyCard(item).catch(() => { });
 
     // Brief visual feedback
     shareBtn.classList.add('shared');
@@ -145,33 +171,42 @@ export class PositiveNewsFeedPanel extends Panel {
    * Share button inside the card body prevents link navigation via delegated handler.
    */
   private renderCard(item: NewsItem, idx: number): string {
-    const imageHtml = item.imageUrl
-      ? `<div class="positive-card-image"><img src="${sanitizeUrl(item.imageUrl)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
-      : '';
-
     const categoryLabel = item.happyCategory ? HAPPY_CATEGORY_LABELS[item.happyCategory] : '';
     const categoryBadgeHtml = item.happyCategory
-      ? `<span class="positive-card-category cat-${escapeHtml(item.happyCategory)}">${escapeHtml(categoryLabel)}</span>`
+      ? `<span class="news-card-category cat-${escapeHtml(item.happyCategory)}">${escapeHtml(categoryLabel)}</span>`
       : '';
 
-    return `<a class="positive-card" href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener" data-category="${escapeHtml(item.happyCategory || '')}">
-  ${imageHtml}
-  <div class="positive-card-body">
-    <div class="positive-card-meta">
-      <span class="positive-card-source">${escapeHtml(item.source)}</span>
-      ${categoryBadgeHtml}
-    </div>
-    <span class="positive-card-title">${escapeHtml(item.title)}</span>
-    <span class="positive-card-time">${formatTime(item.pubDate)}</span>
-    <button class="positive-card-share" aria-label="Share this story" data-idx="${idx}">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
-        <polyline points="16 6 12 2 8 6"/>
-        <line x1="12" y1="2" x2="12" y2="15"/>
-      </svg>
-    </button>
-  </div>
-</a>`;
+    return `
+      <div class="news-card" data-category="${escapeHtml(item.happyCategory || '')}">
+        ${item.imageUrl ? `<div class="news-card-image"><img src="${sanitizeUrl(item.imageUrl)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        <div class="news-card-body">
+          <div class="news-card-header">
+            <span class="news-source">${escapeHtml(item.source)}</span>
+            <span class="news-time">${formatTime(item.pubDate)}</span>
+          </div>
+          
+          <a class="news-title" href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener">${escapeHtml(item.title)}</a>
+          
+          <div class="news-card-meta">
+            ${categoryBadgeHtml}
+          </div>
+
+          <div class="news-card-actions">
+            <button class="positive-card-share" title="Share as Image" data-idx="${idx}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              <span>Image</span>
+            </button>
+            <button class="item-share-fb" title="Share on Facebook" data-title="${escapeHtml(item.title)}" data-link="${escapeHtml(item.link)}" data-source="${escapeHtml(item.source)}" data-img="${escapeHtml(item.imageUrl || '')}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+      </div>`;
   }
 
   /**

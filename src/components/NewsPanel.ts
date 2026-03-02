@@ -184,7 +184,7 @@ export class NewsPanel extends Panel {
     const currentLang = getCurrentLanguage();
     if (currentLang === 'en') return; // Assume news is mostly English, no need to translate if UI is English (or add detection later)
 
-    const titleEl = element.closest('.item')?.querySelector('.item-title') as HTMLElement;
+    const titleEl = element.closest('.news-card')?.querySelector('.news-title') as HTMLElement;
     if (!titleEl) return;
 
     const originalText = titleEl.textContent || '';
@@ -341,20 +341,24 @@ export class NewsPanel extends Panel {
     const html = items
       .map(
         (item) => `
-      <div class="item ${item.isAlert ? 'alert' : ''}" ${item.monitorColor ? `style="border-inline-start-color: ${escapeHtml(item.monitorColor)}"` : ''}>
-        <div class="item-source">
-          ${escapeHtml(item.source)}
-          ${item.lang && item.lang !== getCurrentLanguage() ? `<span class="lang-badge">${item.lang.toUpperCase()}</span>` : ''}
-          ${item.isAlert ? '<span class="alert-tag">ALERT</span>' : ''}
-        </div>
-        <a class="item-title" href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener">${escapeHtml(item.title)}</a>
-        <div class="item-time">
-          ${formatTime(item.pubDate)}
-          ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(item.title)}">文</button>` : ''}
-          <button class="item-share-fb ${localStorage.getItem('fb_share_discovered') ? '' : 'fb-discovery-mode'}" title="${t('components.newsPanel.shareOnFacebook')}" data-title="${escapeHtml(item.title)}" data-link="${escapeHtml(item.link)}" data-source="${escapeHtml(item.source)}" data-img="${escapeHtml(item.imageUrl || '')}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            <span>Share</span>
-          </button>
+      <div class="news-card ${item.isAlert ? 'alert' : ''}" ${item.monitorColor ? `style="--card-border: ${escapeHtml(item.monitorColor)}"` : ''}>
+        ${item.imageUrl ? `<div class="news-card-image"><img src="${escapeHtml(item.imageUrl)}" loading="lazy" /></div>` : ''}
+        <div class="news-card-body">
+          <div class="news-card-header">
+            <span class="news-source">${escapeHtml(item.source)}</span>
+            <span class="news-time">${formatTime(item.pubDate)}</span>
+          </div>
+          <a class="news-title" href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener">${escapeHtml(item.title)}</a>
+          <div class="news-card-actions">
+            ${item.lang && item.lang !== getCurrentLanguage() ? `<span class="lang-badge">${item.lang.toUpperCase()}</span>` : ''}
+            ${item.isAlert ? '<span class="alert-tag">ALERT</span>' : ''}
+            <div class="actions-spacer"></div>
+            ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(item.title)}">文</button>` : ''}
+            <button class="item-share-fb ${localStorage.getItem('fb_share_discovered') ? '' : 'fb-discovery-mode'}" title="${t('components.newsPanel.shareOnFacebook')}" data-title="${escapeHtml(item.title)}" data-link="${escapeHtml(item.link)}" data-source="${escapeHtml(item.source)}" data-img="${escapeHtml(item.imageUrl || '')}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <span>Share</span>
+            </button>
+          </div>
         </div>
       </div>
     `
@@ -536,38 +540,52 @@ export class NewsPanel extends Panel {
 
     // Build class list for item
     const itemClasses = [
-      'item',
+      'news-card',
       'clustered',
       cluster.isAlert ? 'alert' : '',
       shouldHighlight ? 'item-new-highlight' : '',
       isNew ? 'item-new' : '',
     ].filter(Boolean).join(' ');
 
+    const imageUrl = cluster.allItems[0]?.imageUrl || '';
+
     return `
-      <div class="${itemClasses}" ${cluster.monitorColor ? `style="border-inline-start-color: ${escapeHtml(cluster.monitorColor)}"` : ''} data-cluster-id="${escapeHtml(cluster.id)}" data-news-id="${escapeHtml(cluster.primaryLink)}">
-        <div class="item-source">
-          ${tierBadge}
-          ${escapeHtml(cluster.primarySource)}
-          ${primaryPropBadge}
-          ${langBadge}
-          ${newTag}
-          ${sourceBadge}
-          ${velocityBadge}
-          ${sentimentBadge}
-          ${cluster.isAlert ? '<span class="alert-tag">ALERT</span>' : ''}
-          ${categoryBadge}
+      <div class="${itemClasses}" data-cluster-id="${escapeHtml(cluster.id)}" data-news-id="${escapeHtml(cluster.primaryLink)}" ${cluster.monitorColor ? `style="--card-border: ${escapeHtml(cluster.monitorColor)}"` : ''}>
+        ${imageUrl ? `<div class="news-card-image"><img src="${escapeHtml(imageUrl)}" loading="lazy" /></div>` : ''}
+        <div class="news-card-body">
+          <div class="news-card-header">
+            <div class="news-source-line">
+              ${tierBadge}
+              <span class="news-source">${escapeHtml(cluster.primarySource)}</span>
+              ${primaryPropBadge}
+              ${langBadge}
+              ${newTag}
+            </div>
+            <span class="news-time">${formatTime(cluster.lastUpdated)}</span>
+          </div>
+          
+          <a class="news-title" href="${sanitizeUrl(cluster.primaryLink)}" target="_blank" rel="noopener">${escapeHtml(cluster.primaryTitle)}</a>
+          
+          <div class="news-card-meta">
+            ${sourceBadge}
+            ${velocityBadge}
+            ${sentimentBadge}
+            ${cluster.isAlert ? '<span class="alert-tag">ALERT</span>' : ''}
+            ${categoryBadge}
+            ${topSourcesHtml ? `<span class="top-sources">${topSourcesHtml}</span>` : ''}
+          </div>
+
+          <div class="news-card-actions">
+            <div class="actions-left">
+               ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(cluster.primaryTitle)}">文</button>` : ''}
+            </div>
+            <button class="item-share-fb ${localStorage.getItem('fb_share_discovered') ? '' : 'fb-discovery-mode'}" title="${t('components.newsPanel.shareOnFacebook')}" data-title="${escapeHtml(cluster.primaryTitle)}" data-link="${escapeHtml(cluster.primaryLink)}" data-source="${escapeHtml(cluster.primarySource)}" data-img="${escapeHtml(imageUrl)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              <span>Share News</span>
+            </button>
+          </div>
+          ${relatedAssetsHtml}
         </div>
-        <a class="item-title" href="${sanitizeUrl(cluster.primaryLink)}" target="_blank" rel="noopener">${escapeHtml(cluster.primaryTitle)}</a>
-        <div class="cluster-meta">
-          <span class="top-sources">${topSourcesHtml}</span>
-          <span class="item-time">${formatTime(cluster.lastUpdated)}</span>
-          ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(cluster.primaryTitle)}">文</button>` : ''}
-          <button class="item-share-fb ${localStorage.getItem('fb_share_discovered') ? '' : 'fb-discovery-mode'}" title="${t('components.newsPanel.shareOnFacebook')}" data-title="${escapeHtml(cluster.primaryTitle)}" data-link="${escapeHtml(cluster.primaryLink)}" data-source="${escapeHtml(cluster.primarySource)}" data-img="${escapeHtml(cluster.allItems[0]?.imageUrl || '')}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            <span>Share</span>
-          </button>
-        </div>
-        ${relatedAssetsHtml}
       </div>
     `;
   }
