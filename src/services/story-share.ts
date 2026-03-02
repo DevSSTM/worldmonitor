@@ -35,16 +35,16 @@ export function generateQRCode(data: string, size: number = 200): string {
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
-  
+
   // Placeholder - would use actual QR library
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, size, size);
   ctx.fillStyle = '#000000';
   ctx.font = '14px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('Scan to view', size/2, size/2 - 10);
-  ctx.fillText(data.substring(0, 20) + '...', size/2, size/2 + 10);
-  
+  ctx.fillText('Scan to view', size / 2, size / 2 - 10);
+  ctx.fillText(data.substring(0, 20) + '...', size / 2, size / 2 + 10);
+
   return canvas.toDataURL('image/png');
 }
 
@@ -92,11 +92,42 @@ export const shareTexts = {
     `\n🔗 ${generateStoryDeepLink(data.countryCode, 'ciianalysis', data.cii?.score, data.cii?.level)}`
 };
 
+// Deep link generator for news item sharing
+export function generateNewsDeepLink(
+  newsId: string, // primaryLink
+  title: string,
+  source: string,
+  imageUrl?: string
+): string {
+  const params = new URLSearchParams({
+    url: newsId,
+    title,
+    source,
+    ts: Date.now().toString()
+  });
+  if (imageUrl) params.set('img', imageUrl);
+  // Using a separate endpoint for news sharing could allow for custom OG tags
+  return `https://worldmonitor.app/api/share-news?${params.toString()}`;
+}
+
+// Pre-generated share URLs for news items
+export function getNewsShareUrls(news: { title: string; link: string; source: string; imageUrl?: string }): Record<string, string> {
+  const url = generateNewsDeepLink(news.link, news.title, news.source, news.imageUrl);
+  const text = encodeURIComponent(`🚨 Intelligence Alert: ${news.title}\nSource: ${news.source}\n\nVia @WorldMonitorApp`);
+
+  return {
+    twitter: `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    whatsapp: `https://wa.me/?text=${text}%0A${encodeURIComponent(url)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  };
+}
+
 // Pre-generated share URLs
 export function getShareUrls(data: StoryData): Record<string, string> {
   const url = generateStoryDeepLink(data.countryCode, 'ciianalysis', data.cii?.score, data.cii?.level);
   const text = encodeURIComponent(shareTexts.twitter(data));
-  
+
   return {
     twitter: `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,

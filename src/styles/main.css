@@ -2520,6 +2520,46 @@ body.live-news-fullscreen-active .community-widget {
   font-size: 9px;
   color: var(--text-dim);
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.item-share-fb {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.item-share-fb:hover {
+  background: color-mix(in srgb, #1877f2 15%, transparent);
+  color: #1877f2;
+}
+
+.item-translate-btn {
+  background: none;
+  border: 1px solid var(--overlay-light);
+  color: var(--text-dim);
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  height: 14px;
+  line-height: 12px;
+}
+
+.item-translate-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Clustering */

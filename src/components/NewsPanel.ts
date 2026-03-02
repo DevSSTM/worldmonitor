@@ -8,6 +8,7 @@ import { analysisWorker, enrichWithVelocityML, getClusterAssetContext, MAX_DISTA
 import { getSourcePropagandaRisk, getSourceTier, getSourceType } from '@/config/feeds';
 import { SITE_VARIANT } from '@/config';
 import { t, getCurrentLanguage } from '@/services/i18n';
+import { getNewsShareUrls } from '@/services/story-share';
 
 /** Threshold for enabling virtual scrolling */
 const VIRTUAL_SCROLL_THRESHOLD = 15;
@@ -350,6 +351,9 @@ export class NewsPanel extends Panel {
         <div class="item-time">
           ${formatTime(item.pubDate)}
           ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(item.title)}">文</button>` : ''}
+          <button class="item-share-fb" title="${t('components.newsPanel.shareOnFacebook')}" data-title="${escapeHtml(item.title)}" data-link="${escapeHtml(item.link)}" data-source="${escapeHtml(item.source)}" data-img="${escapeHtml(item.imageUrl || '')}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </button>
         </div>
       </div>
     `
@@ -557,6 +561,9 @@ export class NewsPanel extends Panel {
           <span class="top-sources">${topSourcesHtml}</span>
           <span class="item-time">${formatTime(cluster.lastUpdated)}</span>
           ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(cluster.primaryTitle)}">文</button>` : ''}
+          <button class="item-share-fb" title="${t('components.newsPanel.shareOnFacebook')}" data-title="${escapeHtml(cluster.primaryTitle)}" data-link="${escapeHtml(cluster.primaryLink)}" data-source="${escapeHtml(cluster.primarySource)}" data-img="${escapeHtml(cluster.allItems[0]?.imageUrl || '')}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </button>
         </div>
         ${relatedAssetsHtml}
       </div>
@@ -603,6 +610,22 @@ export class NewsPanel extends Panel {
         e.stopPropagation();
         const text = btn.dataset.text;
         if (text) this.handleTranslate(btn, text);
+      });
+    });
+
+    // Facebook share buttons
+    const shareFbBtns = this.content.querySelectorAll<HTMLElement>('.item-share-fb');
+    shareFbBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const news = {
+          title: btn.dataset.title || '',
+          link: btn.dataset.link || '',
+          source: btn.dataset.source || '',
+          imageUrl: btn.dataset.img || undefined
+        };
+        const urls = getNewsShareUrls(news);
+        window.open(urls.facebook, '_blank');
       });
     });
   }

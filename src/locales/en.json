@@ -1238,7 +1238,8 @@
       "summarize": "Summarize this panel",
       "generatingSummary": "Generating summary...",
       "sources": "{{count}} sources",
-      "relatedAssetsNear": "Related assets near {{location}}"
+      "relatedAssetsNear": "Related assets near {{location}}",
+      "shareOnFacebook": "Share on Facebook"
     },
     "export": {
       "exportData": "Export Data"
