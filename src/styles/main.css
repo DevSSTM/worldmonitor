@@ -2626,6 +2626,24 @@ body.live-news-fullscreen-active .community-widget {
   gap: 4px;
   font-size: 10px;
   font-weight: 600;
+  animation: fb-entrance-pulse 2s ease-out forwards;
+}
+
+@keyframes fb-entrance-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(24, 119, 242, 0.4);
+  }
+
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(24, 119, 242, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(24, 119, 242, 0);
+  }
 }
 
 .item-share-fb:hover {
@@ -2633,7 +2651,9 @@ body.live-news-fullscreen-active .community-widget {
   color: #fff;
   border-color: #1877f2;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+  animation: none;
+  /* Stop pulsing on hover */
 }
 
 .item-share-fb svg {
